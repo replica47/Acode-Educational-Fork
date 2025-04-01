@@ -1,3 +1,16 @@
+##Disclaimer
+
+**NOTE:** *Please note that I have no rights to this or the original project repository.*
+
+*Please visit the original repository page* [here](https://github.com/Acode-Foundation/Acode)*,or the Acode Foundation Github* [homepage](https://github.com/Acode-Foundation) *to get the repositories with other interesting source codes/projects.*
+
+----
+
+````
+This part is from the original Author.
+````
+
+----
 # Acode - Code Editor for Android
 
 <p align="center">
