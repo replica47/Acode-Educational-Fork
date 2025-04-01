@@ -12,3 +12,15 @@
 pnpm-lock.yaml
 .zed
 .idea
+<<<<<<< HEAD
+=======
+src/plugins/browser/*.iml
+src/plugins/ftp/*.iml
+src/plugins/iap/*.iml
+src/plugins/sdcard/*.iml
+src/plugins/server/*.iml
+src/plugins/sftp/*.iml
+src/plugins/system/*.iml
+*~
+yarn.lock
+>>>>>>> 0b2333b0 (Some files were modified afte attempt build.)
