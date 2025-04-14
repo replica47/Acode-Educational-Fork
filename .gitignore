@@ -13,6 +13,7 @@ pnpm-lock.yaml
 .zed
 .idea
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 src/plugins/browser/*.iml
 src/plugins/ftp/*.iml
@@ -24,3 +25,6 @@ src/plugins/system/*.iml
 *~
 yarn.lock
 >>>>>>> 0b2333b0 (Some files were modified afte attempt build.)
+=======
+ace-builds
+>>>>>>> 77f05df2991c76ef53acb0a318cd2dcda2ec0151

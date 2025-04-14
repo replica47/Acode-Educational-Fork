@@ -68,11 +68,21 @@ export default async function installPlugin(
 
 		let plugin;
 		if (
-			/^(https?:\/\/)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|localhost)/.test(
-				pluginUrl,
-			)
+			pluginUrl.includes(constants.API_BASE) ||
+			pluginUrl.startsWith("file:") ||
+			pluginUrl.startsWith("content:")
 		) {
-			// cordova http plugin for IP addresses and localhost
+			// Use fsOperation for Acode registry URL
+			plugin = await fsOperation(pluginUrl).readFile(
+				undefined,
+				(loaded, total) => {
+					loaderDialog.setMessage(
+						`${strings.loading} ${((loaded / total) * 100).toFixed(2)}%`,
+					);
+				},
+			);
+		} else {
+			// cordova http plugin for others
 			plugin = await new Promise((resolve, reject) => {
 				cordova.plugin.http.sendRequest(
 					pluginUrl,
@@ -89,22 +99,13 @@ export default async function installPlugin(
 					},
 				);
 			});
-		} else {
-			plugin = await fsOperation(pluginUrl).readFile(
-				undefined,
-				(loaded, total) => {
-					loaderDialog.setMessage(
-						`${strings.loading} ${((loaded / total) * 100).toFixed(2)}%`,
-					);
-				},
-			);
 		}
 
 		if (plugin) {
 			const zip = new JSZip();
 			await zip.loadAsync(plugin);
 
-			if (!zip.files["plugin.json"] || !zip.files["main.js"]) {
+			if (!zip.files["plugin.json"]) {
 				throw new Error(strings["invalid plugin"]);
 			}
 
@@ -112,6 +113,25 @@ export default async function installPlugin(
 			const pluginJson = JSON.parse(
 				await zip.files["plugin.json"].async("text"),
 			);
+
+			/** patch main in manifest */
+			if (!zip.files[pluginJson.main]) {
+				pluginJson.main = "main.js";
+			}
+
+			/** patch icon in manifest */
+			if (!zip.files[pluginJson.icon]) {
+				pluginJson.icon = "icon.png";
+			}
+
+			/** patch readme in manifest */
+			if (!zip.files[pluginJson.readme]) {
+				pluginJson.readme = "readme.md";
+			}
+
+			if (!zip.files[pluginJson.main]) {
+				throw new Error(strings["invalid plugin"]);
+			}
 
 			if (!isDependency && pluginJson.dependencies) {
 				const manifests = await resolveDepsManifest(pluginJson.dependencies);

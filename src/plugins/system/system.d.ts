@@ -189,16 +189,16 @@ interface System {
   openInBrowser(src: string): void;
   /**
    * Launches and app
-   * @param app
-   * @param action
-   * @param value
+   * @param app the package name of the app
+   * @param className the full class name of the activity
+   * @param data Data to pass to the app
    * @param onSuccess
    * @param onFail
    */
   launchApp(
     app: string,
-    action: string,
-    value: string,
+    className: string,
+    data: string,
     onSuccess: OnSuccessBool,
     onFail: OnFail,
   ): void;

@@ -49,9 +49,28 @@ function backupRestore() {
 		try {
 			const settings = appSettings.value;
 			const keyBindings = await fsOperation(KEYBINDING_FILE).readFile("json");
-			const installedPlugins = (
-				await fsOperation(window.PLUGIN_DIR).lsDir()
-			).map((plugin) => plugin.name);
+			const plugins = await fsOperation(window.PLUGIN_DIR).lsDir();
+			const installedPlugins = [];
+			const installedPluginsWithSource = [];
+
+			for (const plugin of plugins) {
+				try {
+					const pluginJsonPath = Url.join(
+						window.PLUGIN_DIR,
+						plugin.name,
+						"plugin.json",
+					);
+					const pluginJson = await fsOperation(pluginJsonPath).readFile("json");
+
+					if (pluginJson.source) {
+						installedPluginsWithSource.push(pluginJson.source);
+					} else {
+						installedPlugins.push(plugin.name);
+					}
+				} catch (error) {
+					installedPlugins.push(plugin.name);
+				}
+			}
 
 			const { url } = await FileBrowser("folder", strings["select folder"]);
 
@@ -74,7 +93,7 @@ function backupRestore() {
 			const backupString = JSON.stringify({
 				settings,
 				keyBindings,
-				installedPlugins,
+				installedPlugins: [...installedPlugins, ...installedPluginsWithSource],
 			});
 
 			await backupFileFS.writeFile(backupString);
@@ -130,35 +149,48 @@ backupRestore.restore = async function (url) {
 			for (const id of installedPlugins) {
 				try {
 					if (!id) continue;
-					const pluginUrl = Url.join(constants.API_BASE, `plugin/${id}`);
-					const remotePlugin = await fsOperation(pluginUrl)
-						.readFile("json")
-						.catch(() => null);
+					if (
+						id.startsWith("content://") ||
+						id.startsWith("file://") ||
+						id.includes("/")
+					) {
+						// Local plugin case - pass URI directly
+						toast("Restoring plugins");
+						await installPlugin(id);
+					} else {
+						// Remote plugin case - fetch from API
+						const pluginUrl = Url.join(constants.API_BASE, `plugin/${id}`);
+						const remotePlugin = await fsOperation(pluginUrl)
+							.readFile("json")
+							.catch(() => null);
 
-					if (remotePlugin) {
-						let purchaseToken = null;
-						if (Number.parseFloat(remotePlugin.price) > 0) {
-							try {
-								const [product] = await helpers.promisify(iap.getProducts, [
-									remotePlugin.sku,
-								]);
-								if (product) {
-									async function getPurchase(sku) {
-										const purchases = await helpers.promisify(iap.getPurchases);
-										const purchase = purchases.find((p) =>
-											p.productIds.includes(sku),
-										);
-										return purchase;
+						if (remotePlugin) {
+							let purchaseToken = null;
+							if (Number.parseFloat(remotePlugin.price) > 0) {
+								try {
+									const [product] = await helpers.promisify(iap.getProducts, [
+										remotePlugin.sku,
+									]);
+									if (product) {
+										async function getPurchase(sku) {
+											const purchases = await helpers.promisify(
+												iap.getPurchases,
+											);
+											const purchase = purchases.find((p) =>
+												p.productIds.includes(sku),
+											);
+											return purchase;
+										}
+										const purchase = await getPurchase(product.productId);
+										purchaseToken = purchase?.purchaseToken;
 									}
-									const purchase = await getPurchase(product.productId);
-									purchaseToken = purchase?.purchaseToken;
+								} catch (error) {
+									helpers.error(error);
 								}
-							} catch (error) {
-								helpers.error(error);
 							}
+							toast("Restoring plugins", 3000);
+							await installPlugin(id, remotePlugin.name, purchaseToken);
 						}
-						toast("Restoring plugins", 3000);
-						await installPlugin(id, remotePlugin.name, purchaseToken);
 					}
 				} catch (error) {
 					console.error(`Error restoring plugin ${id}:`, error);

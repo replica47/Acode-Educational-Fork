@@ -12,7 +12,8 @@
     "setup": "node ./utils/setup.js",
     "lint": "biome lint --write",
     "format": "biome format --write",
-    "check": "biome check --write"
+    "check": "biome check --write",
+    "updateAce": "node ./utils/updateAce.js"
   },
   "keywords": [
     "ecosystem:cordova"
@@ -113,6 +114,11 @@
     "vanilla-picker": "^2.12.3",
     "yargs": "^17.7.2"
   },
+<<<<<<< HEAD
   "browserslist": "cover 100%,not android < 5",
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
+=======
+  "browserslist": "cover 100%,not android < 5"
+}
+>>>>>>> 77f05df2991c76ef53acb0a318cd2dcda2ec0151

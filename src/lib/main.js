@@ -53,6 +53,7 @@ import { initFileList } from "lib/fileList";
 import NotificationManager from "lib/notificationManager";
 import { addedFolder } from "lib/openFolder";
 import { getEncoding, initEncodings } from "utils/encodings";
+import auth, { loginEvents } from "./auth";
 import constants from "./constants";
 
 const previousVersionCode = Number.parseInt(localStorage.versionCode, 10);
@@ -240,12 +241,32 @@ async function onDeviceReady() {
 			// load plugins
 			try {
 				await loadPlugins();
+
+				// Re-emit events for active file after plugins are loaded
+				const { activeFile } = editorManager;
+				if (activeFile?.uri) {
+					// Re-emit file-loaded event
+					editorManager.emit("file-loaded", activeFile);
+					// Re-emit switch-file event
+					editorManager.emit("switch-file", activeFile);
+				}
 			} catch (error) {
 				window.log("error", "Failed to load plugins!");
 				window.log("error", error);
 				toast("Failed to load plugins!");
 			}
 			applySettings.afterRender();
+
+			// Check login status before emitting events
+			try {
+				const isLoggedIn = await auth.isLoggedIn();
+				if (isLoggedIn) {
+					loginEvents.emit();
+				}
+			} catch (error) {
+				console.error("Error checking login status:", error);
+				toast("Error checking login status");
+			}
 		}, 500);
 	}
 

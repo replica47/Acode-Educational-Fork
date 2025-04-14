@@ -294,19 +294,21 @@ async function handleContextmenu(type, url, name, $target) {
 			options.push(INSTALL_PLUGIN);
 		}
 	} else if (helpers.isDir(type)) {
-		options = [
-			COPY,
-			CUT,
-			REMOVE,
-			RENAME,
-			PASTE,
-			NEW_FILE,
-			NEW_FOLDER,
-			OPEN_FOLDER,
-			INSERT_FILE,
-		];
+		options = [COPY, CUT, REMOVE, RENAME];
+
+		if (clipBoard.url != null) {
+			options.push(PASTE);
+		}
+
+		options.push(NEW_FILE, NEW_FOLDER, OPEN_FOLDER, INSERT_FILE);
 	} else if (type === "root") {
-		options = [PASTE, NEW_FILE, NEW_FOLDER, INSERT_FILE, CLOSE_FOLDER];
+		options = [];
+
+		if (clipBoard.url != null) {
+			options.push(PASTE);
+		}
+
+		options.push(NEW_FILE, NEW_FOLDER, INSERT_FILE, CLOSE_FOLDER);
 	}
 
 	if (clipBoard.action) options.push(CANCEL);
@@ -526,6 +528,11 @@ function execOperation(type, action, url, $target, name) {
 	}
 
 	async function paste() {
+		if (clipBoard.url == null) {
+			alert(strings.warning, "Nothing to paste");
+			return;
+		}
+
 		let CASE = "";
 		const $src = clipBoard.$el;
 		const srcType = $src.dataset.type;
